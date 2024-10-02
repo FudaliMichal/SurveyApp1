@@ -1,0 +1,83 @@
+@page "/MySurveys"
+@using SurveyApp1.Services
+@using System.IO.Compression
+@using System.IO
+@using SurveyApp1.Components.Data
+@using SurveyApp1.Models
+
+<h3>MySurveys</h3>
+
+<p>
+    <InputFile OnChange="HandleSelectedFiles" accept=".zip"/>
+</p>
+
+@if (_uploadResult != null)
+{
+    <p>@_uploadResult</p>
+}
+
+@inject TestFileParserService ParserService
+@inject AuthenticationStateProvider AuthProvider
+@inject ApplicationDbService DbService
+
+@code {
+    private string? _uploadResult;
+    private TestownikTest _testownikTest = null!;
+    private string CurUserId = string.Empty;
+
+    private async Task HandleSelectedFiles(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+
+        if (file.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+        {
+            await ProcessZipFileAsync(file);
+        }
+        else
+        {
+            _uploadResult = "Please upload a .zip file.";
+        }
+    }
+
+    private async Task ProcessZipFileAsync(IBrowserFile file)
+    {
+        var buffer = new byte[file.Size];
+        await file.OpenReadStream().ReadAsync(buffer);
+
+        var tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            var tempZipPath = Path.Combine(tempDir, file.Name);
+            await File.WriteAllBytesAsync(tempZipPath, buffer);
+
+            ZipFile.ExtractToDirectory(tempZipPath, tempDir);
+            Console.WriteLine(tempDir);
+            
+            _testownikTest = await ParserService.ParseFileAsync(tempDir, CurUserId);
+            await DbService.DbInsertTestAsync(_testownikTest);
+                        
+            _uploadResult = $"Uploaded '{file.Name}' successfully and processed {_testownikTest.TestQuestions.Count} question(s).";
+            
+        }
+        catch (Exception ex)
+        {
+            _uploadResult = $"Error processing zip file: {ex.Message}";
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, true);
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await AuthProvider.GetAuthenticationStateAsync()).User;
+        var UserStringId = user.FindFirst(c => c.Type.Contains("nameidentifier"))?.Value;
+        CurUserId = UserStringId;
+    }
+}
