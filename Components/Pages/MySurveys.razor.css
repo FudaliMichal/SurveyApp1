@@ -1,0 +1,13 @@
+.tests {
+    display: grid;
+    grid-template-columns: repeat(4, 200px);
+    grid-template-rows: 150px;
+    gap: 5px;
+    margin-bottom: 20px;
+}
+.cell {
+    border: 1px solid #000;
+    padding: 10px;
+    text-align: center;
+}
+

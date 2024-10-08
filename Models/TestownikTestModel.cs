@@ -8,7 +8,9 @@ public class TestownikTestModel
         TestTitle = string.Empty;
     }
 
+    
+
     public string TestTitle { get; set; }
-    public List<TestownikQuestionModel> TestQuestions { get; }
+    public List<TestownikQuestionModel> TestQuestions { get; set; }
     
 }

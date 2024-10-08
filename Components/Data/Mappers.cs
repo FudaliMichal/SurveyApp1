@@ -24,4 +24,12 @@ public static class Mappers
             Answers = testownikQuestion.Answers.Select(x => x.ToModel()).ToList(),
         };
     }
+    
+    public static TestownikTestModel ToModel(this TestownikTest testownikTest)
+    {
+        return new TestownikTestModel(testownikTest.TestQuestions.Select(x => x.ToModel()).ToList())
+        {
+            TestTitle = testownikTest.TestTitle,
+        };
+    }
 }

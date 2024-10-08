@@ -5,16 +5,37 @@
 @using SurveyApp1.Components.Data
 @using SurveyApp1.Models
 
-<h3>MySurveys</h3>
+<h3>My Surveys</h3>
 
-<p>
-    <InputFile OnChange="HandleSelectedFiles" accept=".zip"/>
-</p>
+<Modal @ref="_modal" Title="Upload your file">
+    <BodyTemplate>
 
-@if (_uploadResult != null)
-{
-    <p>@_uploadResult</p>
-}
+        Set your survey's name:
+        <p>
+            <InputText ValueExpression="() => _testName" ValueChanged="(value) => _testName = value"></InputText>
+        </p>
+        
+        <p>
+            <InputFile OnChange="HandleSelectedFiles" accept=".zip"/>
+        </p>
+
+        @if (_uploadResult != null)
+        {
+            <p>@_uploadResult</p>
+        }
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Primary" @onclick="OnHideUploadModalClick">Done</Button>
+    </FooterTemplate>
+</Modal>
+<Button Color="ButtonColor.Success" @onclick="OnShowUploadModalClick">Upload files</Button>
+
+
+
+
+
+
+
 
 @inject TestFileParserService ParserService
 @inject AuthenticationStateProvider AuthProvider
@@ -22,25 +43,35 @@
 
 @code {
     private string? _uploadResult;
-    private TestownikTest _testownikTest = null!;
-    private string CurUserId = string.Empty;
+    private string _curUserId = string.Empty;
+    private string _testName = string.Empty;
+    private Modal _modal = default!;
 
     private async Task HandleSelectedFiles(InputFileChangeEventArgs e)
     {
-        var file = e.File;
-
-        if (file.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+        if (_testName != string.Empty)
         {
-            await ProcessZipFileAsync(file);
+            var file = e.File;
+
+            if (file.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+            {
+                await ProcessZipFileAsync(file);
+            }
+            else
+            {
+                _uploadResult = "Please upload a .zip file.";
+            } 
         }
         else
         {
-            _uploadResult = "Please upload a .zip file.";
+            _uploadResult = "Make sure you set a correct name for your survey!";
         }
+        
     }
 
     private async Task ProcessZipFileAsync(IBrowserFile file)
     {
+
         var buffer = new byte[file.Size];
         await file.OpenReadStream().ReadAsync(buffer);
 
@@ -55,10 +86,10 @@
             ZipFile.ExtractToDirectory(tempZipPath, tempDir);
             Console.WriteLine(tempDir);
             
-            _testownikTest = await ParserService.ParseFileAsync(tempDir, CurUserId);
-            await DbService.DbInsertTestAsync(_testownikTest);
+            var testownikTest = await ParserService.ParseFileAsync(tempDir, _curUserId, _testName);
+            await DbService.DbInsertTestAsync(testownikTest);
                         
-            _uploadResult = $"Uploaded '{file.Name}' successfully and processed {_testownikTest.TestQuestions.Count} question(s).";
+            _uploadResult = $"Uploaded '{file.Name}' successfully and processed {testownikTest.TestQuestions.Count} question(s).";
             
         }
         catch (Exception ex)
@@ -77,7 +108,23 @@
     protected override async Task OnInitializedAsync()
     {
         var user = (await AuthProvider.GetAuthenticationStateAsync()).User;
-        var UserStringId = user.FindFirst(c => c.Type.Contains("nameidentifier"))?.Value;
-        CurUserId = UserStringId;
+        var userStringId = user.FindFirst(c => c.Type.Contains("nameidentifier"))?.Value;
+        _curUserId = userStringId;
+
+        await DbService.TestContentsAsync(_curUserId);
+    }
+    
+
+    private async Task OnShowUploadModalClick()
+    {
+        _testName = string.Empty;
+        _uploadResult = string.Empty;
+
+        await _modal.ShowAsync();
+    }
+
+    private async Task OnHideUploadModalClick()
+    {
+        await _modal.HideAsync();
     }
 }

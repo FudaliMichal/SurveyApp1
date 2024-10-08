@@ -10,7 +10,7 @@ public class TestFileParserService
 {
     
     
-    public async Task<TestownikTest> ParseFileAsync(string dir, string curUser)
+    public async Task<TestownikTest> ParseFileAsync(string dir, string curUser, string testName)
     {
         var dirInfo = new DirectoryInfo(dir);
         var files = dirInfo.EnumerateFiles("*.txt", SearchOption.AllDirectories)
@@ -30,7 +30,7 @@ public class TestFileParserService
         var test = new TestownikTest()
         {
             TestQuestions = questions,
-            TestTitle = "test title",
+            TestTitle = testName,
             UserId = curUser,
             
         };
