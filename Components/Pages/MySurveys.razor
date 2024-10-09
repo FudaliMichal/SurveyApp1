@@ -2,7 +2,6 @@
 @using SurveyApp1.Services
 @using System.IO.Compression
 @using System.IO
-@using SurveyApp1.Components.Data
 @using SurveyApp1.Models
 
 <h3>My Surveys</h3>
@@ -31,6 +30,19 @@
 <Button Color="ButtonColor.Success" @onclick="OnShowUploadModalClick">Upload files</Button>
 
 
+<div class="scrollable-container">
+    <div class="grid">
+        @if (_testList != null)
+        {
+            foreach (var test in _testList)
+            {
+                <div class="grid-item">@test.TestTitle</div>
+            }
+        }
+    </div>
+</div>
+
+
 
 
 
@@ -42,10 +54,11 @@
 @inject ApplicationDbService DbService
 
 @code {
-    private string? _uploadResult;
-    private string _curUserId = string.Empty;
+    private string? _uploadResult = string.Empty;
+    private string? _curUserId = string.Empty;
     private string _testName = string.Empty;
     private Modal _modal = default!;
+    private List<TestownikTestModel>? _testList;
 
     private async Task HandleSelectedFiles(InputFileChangeEventArgs e)
     {
@@ -111,7 +124,12 @@
         var userStringId = user.FindFirst(c => c.Type.Contains("nameidentifier"))?.Value;
         _curUserId = userStringId;
 
-        await DbService.TestContentsAsync(_curUserId);
+        _testList =  await DbService.TestContentsAsync(_curUserId);
+
+        foreach (var test in _testList)
+        {
+            Console.WriteLine(test.TestTitle);
+        }
     }
     
 
@@ -126,5 +144,6 @@
     private async Task OnHideUploadModalClick()
     {
         await _modal.HideAsync();
+        _testList =  await DbService.TestContentsAsync(_curUserId);
     }
 }

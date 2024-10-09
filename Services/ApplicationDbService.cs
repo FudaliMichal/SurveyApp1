@@ -25,7 +25,7 @@ public class ApplicationDbService
         await _dbContext.SaveChangesAsync();
     }
     
-    public async Task<List<TestownikTestModel>> TestContentsAsync(string userid)
+    public async Task<List<TestownikTestModel>?> TestContentsAsync(string? userid)
     {
         var testList = new List<TestownikTestModel>();
         
@@ -42,10 +42,10 @@ public class ApplicationDbService
             testList.Add(temp);
         }
 
-        foreach (var t in testList)
-        {
-            Console.WriteLine(t.TestTitle);
-        }
+        // foreach (var t in testList)
+        // {
+        //     Console.WriteLine(t.TestTitle);
+        // }
         
         return testList;
        

@@ -10,7 +10,7 @@ public class TestFileParserService
 {
     
     
-    public async Task<TestownikTest> ParseFileAsync(string dir, string curUser, string testName)
+    public async Task<TestownikTest> ParseFileAsync(string dir, string? curUser, string testName)
     {
         var dirInfo = new DirectoryInfo(dir);
         var files = dirInfo.EnumerateFiles("*.txt", SearchOption.AllDirectories)
